@@ -32,68 +32,70 @@
 // console.log(user4.getName());
 // user4.sayHello();
 
- interface IUser{
-    id:number,
-     name:string,
-     age:number
- }
- 
- type  IUserForm = Pick<IUser, "name" | "age" >
+interface IUser {
+    id: number,
+    name: string,
+    age: number
+}
+type IUserForm = Pick<IUser,"name" | "age">;
 
- class UserService {
-     private static readonly _usersKey = 'users';
+class UserService {
+    private static readonly _userKey = 'users';
 
-     private static _getAll():IUser[]{
-         return JSON.parse(localStorage.getItem(this._usersKey)) || [{id:1,name:"Max",age:30}]
-     }
-        static create(data:IUserForm):void{
-         const users = this._getAll();
-         const id = users.length ? users.slice(-1)[0].id+1 : 1;
-         users.push({id, ...data});
-         this._setToStorage(users);
-        }
-    static render():void{
+    private static _getUsers(): IUser[] {
+        return JSON.parse(localStorage.getItem(this._userKey)) || [{id: 1, name: "Max", age: 26}]
+    }
+    static create(data:IUserForm):void{
+        let users = this._getUsers();
+        let id = users.length ? users.slice(-1)[0].id+1 :1;
+        users.push({id,...data});
+        this._setToStorage(users);
+    }
+    private static _deleteUser(id:number):void{
+        const users = this._getUsers();
+        const index =  users.findIndex(user=>user.id === id);
+        users.splice(index,1);
+        this._setToStorage(users);
+    }
+
+    static render(): void {
+        const users = this._getUsers();
+
         const userContainer = document.querySelector('#userContainer') as HTMLDivElement;
         userContainer.innerHTML = '';
 
-        const users = this._getAll();
-
-       const usersHtmlContent= users.map(user=>{
+        const htmlUserContainer = users.map(user => {
             let div = document.createElement('div');
             let button = document.createElement('button');
             button.innerText = 'delete';
-            div.innerText = `${user.id}: ${user.name} ${user.age}`;
-           div.appendChild(button);
+            button.onclick = () =>{
+                this._deleteUser(user.id)
+            }
+            div.innerText = ` ${user.name} ${user.age} years old`;
+            div.appendChild(button);
             return div;
-        });
+        })
 
-       if (usersHtmlContent.length){
-           userContainer.append(...usersHtmlContent)
-       }else {
-           userContainer.innerText = 'Users not exists';
-       }
-     }
+        if (htmlUserContainer.length){
+            userContainer.append(...htmlUserContainer)
+        }else {
+            userContainer.innerText = "Users not exist";
+        }
 
-     private static _setToStorage(data:IUser[]):void{
-         localStorage.setItem(this._usersKey, JSON.stringify(data));
+    }
+    private static _setToStorage(data:IUser[]):void{
+        localStorage.setItem(this._userKey,JSON.stringify(data));
         this.render();
-     }
- }
-
+    }
+}
 UserService.render();
 
-interface IInputs {
-    name:HTMLInputElement;
-    age:HTMLInputElement;
-}
-
-const form = document.forms['userForm'] as HTMLFormElement;
-
-form.onsubmit = (e:SubmitEvent)=>{
+const forms = document.forms['userForm'] as HTMLFormElement;
+forms.onsubmit = (e:SubmitEvent) =>{
     e.preventDefault();
-   // const {name,age} = form as any as IInputs;
-    const {name:{value:name},age:{value:age}} = form as any as Record<keyof IUserForm, HTMLInputElement>
+    const {name:{value:name},age:{value:age}} = forms as any as Record<keyof IUserForm, HTMLFormElement>
     UserService.create({name,age:+age});
+    forms.reset();
 }
 
 // <> - defines a generic type parameter. Generics allow to handle multiple types of variables.
@@ -117,3 +119,8 @@ form.onsubmit = (e:SubmitEvent)=>{
 //The data parameter is explicitly defined as an object of type IUserForm, and this function expects that you will pass an object conforming
 // to the IUserForm interface when you call it.
 // This provides type checking and documentation, making it clear what kind of data is expected.
+
+//HTMLFormElement - cast the result to the HTMLFormElement, indicating that you expect the form to be of this specific type.
+
+//Record<keyof IUserForm, HTMLInputElement> - this allows TypeScript to understand the shape of the form object and ensure
+// that the destructured properties are of type HTMLInputElement.
