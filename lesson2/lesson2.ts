@@ -69,7 +69,7 @@ class UserService {
             let button = document.createElement('button');
             button.innerText = 'delete';
             button.onclick = () =>{
-                this._deleteUser(user.id)
+                this._deleteUser(user.id);
             }
             div.innerText = ` ${user.name} ${user.age} years old`;
             div.appendChild(button);
